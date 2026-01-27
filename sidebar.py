@@ -1,8 +1,19 @@
-from pygame import Rect, font, draw, display
+from pygame import Rect, font, draw, display, Surface
 from typing import Literal
 
 from globals import Globals, screen
-from utils import calculate_text_dimensions
+
+
+def calculate_text_dimensions(pygame_font: font.Font, text: str) -> tuple[int, int]:
+    highest_letter_height: int = 0
+    text_width: int = 0
+    for letter_used in text:
+        letter_width, letter_height = pygame_font.size(letter_used)
+        text_width += letter_width
+        if letter_height > highest_letter_height:
+            highest_letter_height = letter_height
+    return (text_width, highest_letter_height)
+
 
 class BaseButton:
     def __init__(
@@ -10,7 +21,7 @@ class BaseButton:
         screen_coordinates: tuple[int, int],
         text: str,
         dimensions: tuple[int, int],
-        hidden: bool = False,
+        hidden: bool = False, 
     ):
         self._coordinates: tuple[int, int] = screen_coordinates
         self._text: str = text
@@ -36,7 +47,10 @@ class BaseButton:
         self._pygame_font = font.Font(
             "GothamBlack.ttf", int(Globals.TEXT_SIZE_TILE * 3 / 4)
         )
-        self._letter_image = self._pygame_font.render(self.text, True, "Black")
+        self._letter_image: Surface
+        self._text_coordinates: tuple[int,int]
+        self.text_render()
+        """self._letter_image: Surface = self._pygame_font.render(self.text, True, "Black")
         self._highest_letter_height: int = 0
         self._text_width: int = 0
         for letter_used in self._text:
@@ -47,7 +61,7 @@ class BaseButton:
         self._text_coordinates: tuple[int, int] = (
             self._coordinates[0] - self.floor(self._text_width / 2),
             self._coordinates[1] - self.floor(self._highest_letter_height / 2),
-        )
+        )"""
         Globals.global_should_recompute = True
         self.update()
 
@@ -77,7 +91,26 @@ class BaseButton:
                 int(self._dimensions[1] / 4),
             )
             screen.blit(self._letter_image, self._text_coordinates)
-
+        elif self.hidden:
+            cover_rect: Rect = draw.rect( # pyright: ignore[reportUnusedVariable]
+                display.get_surface(),
+                (0,0,0),
+                self._base_tile_shape,
+            )
+    
+    def text_render(self) -> None:
+        self._letter_image = self._pygame_font.render(self.text, True, "Black")
+        self._highest_letter_height: int = 0
+        self._text_width: int = 0
+        for letter_used in self._text:
+            letter_width, letter_height = self._pygame_font.size(letter_used)
+            self._text_width += letter_width
+            if letter_height > self._highest_letter_height:
+                self._highest_letter_height = letter_height
+        self._text_coordinates: tuple[int, int] = (
+            self._coordinates[0] - self.floor(self._text_width / 2),
+            self._coordinates[1] - self.floor(self._highest_letter_height / 2),
+        )
     @property
     def vertical_range(self) -> tuple[int, int]:
         return self._button_vertical_range
@@ -135,16 +168,16 @@ class NumberButton(BaseButton):
                 + int((Globals.BUTTON_SIZE[0] - 8) / 10)
                 + int(
                     (Globals.BUTTON_SIZE[0] - 8)
-                    * (number - 1 if number - 1 in [0, 1, 2, 3, 4] else number - 6)
+                    * (number - 1 if number - 1 in [i for i in range(0,5)] else number - 6)
                     / 5
                 )
                 + Globals.BORDER_BETWEEN_TILES_WIDTH
-                * (number - 1 if number - 1 in [0, 1, 2, 3, 4] else number - 6),
+                * (number - 1 if number - 1 in [i for i in range(0,5)] else number - 6),
                 top_y_coordinate
                 + int((Globals.BUTTON_SIZE[0] - 8) / 10)
-                * (1 if number - 1 in [0, 1, 2, 3, 4] else 3)
+                * (1 if number - 1 in [i for i in range(0,5)] else 3)
                 + Globals.BORDER_BETWEEN_TILES_WIDTH
-                * (1 if number - 1 in [0, 1, 2, 3, 4] else 2),
+                * (1 if number - 1 in [i for i in range(0,5)] else 2),
                 # + Globals.BORDER_BETWEEN_TILES_WIDTH * (number - 1 if number - 1 in []),
             ),
             str(number),
@@ -203,7 +236,7 @@ class Scores:
         self.update()
 
     def update(self):
-
+        self._player_score, self._bot_score = Globals.scores
         self._background_rect: Rect = draw.rect(
             display.get_surface(),  # surface
             Globals.TILE_COLOR_DICT["Try_board/Selected_tilerow"],  # color
@@ -212,10 +245,11 @@ class Scores:
             int(Globals.BUTTON_SIZE[1] / 4),  # corner radius
         )
         self._player_score_image = self._pygame_font.render(
-            str(self.player_score), True, "Black"
+            str(self._player_score), True, "Black"
         )
+        print(self._player_score)
         self._bot_score_image = self._pygame_font.render(
-            str(self.bot_score), True, "Black"
+            str(self._bot_score), True, "Black"
         )
         self._player_score_image_coordinates: tuple[int, int] = (
             Globals.SCREEN_WIDTH
@@ -245,6 +279,7 @@ class Scores:
     @player_score.setter
     def player_score(self, new_score: int) -> None:
         self._player_score = new_score
+        print(f"player score {self._player_score}; bot score {self._bot_score};")
         self.update()
 
     @property
@@ -254,7 +289,44 @@ class Scores:
     @bot_score.setter
     def bot_score(self, new_score: int) -> None:
         self._bot_score = new_score
+        print(f"bot score {self._bot_score}; player score {self._player_score};")
         self.update()
+
+
+class BlankTileButtonSet:
+    def __init__(self):
+        bottom_coordinate: int = Globals.ROW_TILES_SCREEN_HEIGHT - Globals.BUTTON_SIZE[1]
+        left_x_coordinate: int = Globals.SCREEN_WIDTH - Globals.BUTTON_SIZE[0] + 12 # 3 buttons of 40 x 40 spaced 2 apart
+
+        self.previous_letter_button: BaseButton = BaseButton((int(left_x_coordinate + Globals.TILE_SIZE * 1 / 2), int(bottom_coordinate - Globals.TILE_SIZE / 2)), "<=", (Globals.TILE_SIZE, Globals.TILE_SIZE))
+        self.current_letter_button: BaseButton = BaseButton((int(left_x_coordinate + Globals.TILE_SIZE * 3 / 2 + Globals.BORDER_BETWEEN_TILES_WIDTH), int(bottom_coordinate - Globals.TILE_SIZE / 2)), "A", (Globals.TILE_SIZE, Globals.TILE_SIZE))
+        self.next_letter_button: BaseButton = BaseButton((int(left_x_coordinate + Globals.TILE_SIZE * 5 / 2 + Globals.BORDER_BETWEEN_TILES_WIDTH * 2), int(bottom_coordinate - Globals.TILE_SIZE / 2)), "=>", (Globals.TILE_SIZE, Globals.TILE_SIZE))
+        self.buttons_list: list[BaseButton] = [self.previous_letter_button, self.current_letter_button, self.next_letter_button]
+        self.hide_buttons()
+        self.update()
+
+    def update(self):
+        for button in self.buttons_list:
+            button.text_render()
+            button.update()
+    
+    def hide_buttons(self) -> None:
+        for button in self.buttons_list:
+            button.hidden = (True if not button.hidden else False)
+        self.update()
+    
+    def check_if_clicked(self, mouse_coordinates: tuple[int,int]) -> None | str:
+        print(f"run test {self.current_letter_button.text}")
+        for button in self.buttons_list:
+            if (button.horizontal_range[0] < mouse_coordinates[0] < button.horizontal_range[1]) and (button.vertical_range[0] < mouse_coordinates[1] < button.vertical_range[1]):
+                if button.text == "=>": # next letter in alphabet
+                    self.current_letter_button.text = chr((ord(self.current_letter_button.text) + 1 if ord(self.current_letter_button.text) < 90 else 65))
+                elif button.text == "<=":
+                    self.current_letter_button.text = chr((ord(self.current_letter_button.text) - 1 if ord(self.current_letter_button.text) > 65 else 90))
+                elif button.text in Globals.TILE_LETTER_DICT.keys():
+                    return button.text
+        self.update()
+        return None
 
 
 class ButtonSet:
@@ -270,6 +342,7 @@ class ButtonSet:
             "PLAY WORD",
             Globals.BUTTON_SIZE,
         )
+        self._blank_tile_buttons: BlankTileButtonSet = BlankTileButtonSet()
         self._shuffle_board_button: BaseButton = BaseButton(
             (
                 left_x_coordinate + int(Globals.BUTTON_SIZE[0] / 2),
@@ -404,12 +477,14 @@ class ButtonSet:
             button.update()
         for button in self.number_buttons_dict.values():
             button.update()
-
+        self._blank_tile_buttons.update()
 
 class SideBar:
     def __init__(self):
         self._score_object: Scores = Scores()
         self._button_set: ButtonSet = ButtonSet()
+        self._blank_button_set: BlankTileButtonSet = BlankTileButtonSet()
+
         max_vertical_coordinate: int = self._score_object.BACKGROUND_HEIGHT
         button: BaseButton
         for button in self._button_set.BUTTON_LIST:
@@ -476,17 +551,7 @@ class SideBar:
                         Globals.global_should_recompute = True
                         return "Swap_letters"
 
-    def number_button_clicked(self, mouse_coordinates: tuple[int, int]) -> None:
-        for button in self._button_set.number_buttons_dict.values():
-            if (
-                button.horizontal_range[0]
-                <= mouse_coordinates[0]
-                <= button.horizontal_range[1]
-                and button.vertical_range[0]
-                <= mouse_coordinates[1]
-                <= button.vertical_range[1]
-            ):
-                button.highlighted = True if not button.highlighted else False
+    
 
     def update(self) -> None:
         self._score_object.update()
@@ -507,3 +572,7 @@ class SideBar:
     @property
     def button_set(self) -> ButtonSet:
         return self._button_set
+
+    @property
+    def blank_button_set(self) -> BlankTileButtonSet:
+        return self._blank_button_set

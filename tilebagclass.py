@@ -10,6 +10,7 @@ class TileBag:
         self._tile_bag_dict = Globals.TILE_LETTER_DICT
         self._bag_list: list[str] = []
         self.fill_bag()
+       
 
     def fill_bag(self) -> None:
         for letter in self._tile_bag_dict:
