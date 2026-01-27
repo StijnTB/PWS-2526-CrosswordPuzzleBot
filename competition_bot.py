@@ -2,8 +2,8 @@ from itertools import combinations, product
 from math import comb, e
 from pygame import display
 from random import choices, seed 
-from time import sleep
-from typing import Literal
+#from time import sleep
+from typing import Literal, Optional, TypedDict
 
 from bot import Bot
 from boardclass import Board
@@ -12,11 +12,14 @@ from globals import Globals
 from sidebar import SideBar
 from tilebagclass import TileBag
 from tileclass import BoardTile
-from utils import get_expected_multiplication
 
 seed(Globals.RANDOM_SEED)
 
-empty_tile: set[None | str] = {None, "DW", "DL", "TW", "TL", ""}
+
+class GameBoardCell(TypedDict):
+    type: Optional[str]
+    letter: Optional[str]
+    tile_object: BoardTile
 
 
 class CompetitionBot(Bot):
@@ -59,7 +62,6 @@ class CompetitionBot(Bot):
         super().__init__(self._tilebag, self._board)
 
     def getGreedyMove(self) -> BotMoveObject:
-
         possible_moves_list: list[BotMoveObject] = []
         best_move_greedy: BotMoveObject = BotMoveObject([], [], [], (1, 1), 0)
         bingo_dict: dict[str, float] = {}
@@ -88,7 +90,7 @@ class CompetitionBot(Bot):
                     for tile in self._board.game_board[str(row)].values():
                         tiles_in_row += (
                             tile["tile_object"].letter
-                            if tile["tile_object"].letter not in empty_tile
+                            if tile["tile_object"].letter not in Globals.EMPTY_TILE
                             else ""
                         )
                 best_move_horizontal, possible_moves_horizontal = (
@@ -116,7 +118,7 @@ class CompetitionBot(Bot):
                 if 1 != 1:
                     for row in self._board.game_board.values():
                         current_tile = row[str(column_index)]["letter"]
-                        if current_tile not in empty_tile and isinstance(
+                        if current_tile not in Globals.EMPTY_TILE and isinstance(
                             current_tile, str
                         ):
                             tiles_in_column += current_tile
@@ -142,10 +144,10 @@ class CompetitionBot(Bot):
                     )
                 ):
                     best_move_greedy = best_move_vertical
-        if self._amount_of_turns >= 100:
+        """if self._amount_of_turns >= 100:
             print(
                 "moves: ", [move.move_attempted_words for move in possible_moves_list]
-            )
+            )"""
         return best_move_greedy
 
     def competition_bot_play(self) -> None:
@@ -189,9 +191,12 @@ class CompetitionBot(Bot):
             )
             self._tilerow.get_new_letters(best_move.move_attempted_letters)
             if self._player_id == 1:
-                self._sidebar.score_object.bot_score += best_move.score
+                Globals.scores[1] += best_move.score
+                #self._sidebar.score_object.bot_score += best_move.score
             elif self._player_id == 2:
-                self._sidebar.score_object.player_score += best_move.score
+                Globals.scores[0] += best_move.score
+                #self._sidebar.score_object.player_score += best_move.score
+            self._sidebar.score_object.update()
             Globals.amount_of_passes = 0
         elif move_failed and best_move.bingo_bonus_score > 0:
             self.tilerow.swap_letters(best_move.move_attempted_letters)
@@ -200,7 +205,7 @@ class CompetitionBot(Bot):
             print("no move found, bot passes")
             Globals.amount_of_passes += 1
         display.flip()
-        sleep(1)
+        #sleep(1)
 
     def get_letters_in_array(
         self, row_or_column: Literal["row", "column"], array_index: int
@@ -218,7 +223,7 @@ class CompetitionBot(Bot):
                 if self._board.game_board[str(board_coordinates[0])][
                     str(board_coordinates[1])
                 ]["tile_object"].letter
-                not in empty_tile
+                not in Globals.EMPTY_TILE
                 else ""
             )
         return tiles_in_array
@@ -305,9 +310,7 @@ class CompetitionBot(Bot):
             
             return False
 
-        opposite_direction: tuple[int, int] = (1, 0) if direction == (0, 1) else (0, 1)
-
-        if self.touches_no_tiles(tile, direction, opposite_direction, word):
+        if self.touches_no_tiles(tile, direction, (direction[1], direction[0]), word):
             return False
 
         if self.word_has_letters_before_or_after(tile, direction, word):
@@ -323,7 +326,7 @@ class CompetitionBot(Bot):
         points_results = self.get_points_and_attempted_words(
             tile,
             direction,
-            opposite_direction,
+            (direction[1], direction[0]),
             word,
             word_attempt_letters,
             word_attempt_tiles,
@@ -371,8 +374,8 @@ class CompetitionBot(Bot):
                 return True  # the attempted word has a letter before it
 
         if (
-            tile.board_coordinates[0] + direction[0] * (len(word) + 0 - 1) != 15
-            and tile.board_coordinates[1] + direction[1] * (len(word) + 0 - 1) != 15
+            tile.board_coordinates[0] + direction[0] * (len(word) + 0) != 15
+            and tile.board_coordinates[1] + direction[1] * (len(word) + 0) != 15
         ):
             if (
                 self._board.game_board[
@@ -407,7 +410,7 @@ class CompetitionBot(Bot):
             current_tile_letter = self._board.game_board[
                 str(starting_coordinates[0] + direction[0] * index)
             ][str(starting_coordinates[1] + direction[1] * index)]["tile_object"].letter
-            if current_tile_letter in empty_tile:
+            if current_tile_letter in Globals.EMPTY_TILE:
                 current_tile_letter = "_"
             current_board_state += current_tile_letter
         attempted_word_as_state: str = ""
@@ -448,7 +451,7 @@ class CompetitionBot(Bot):
             letter = self._board.game_board[
                 str(starting_coordinates[0] + index * direction[0])
             ][str(starting_coordinates[1] + index * direction[1])]["tile_object"].letter
-            if letter not in empty_tile:
+            if letter not in Globals.EMPTY_TILE:
                 letters_required_with_word_placement += letter
         for letter in word:
             letters_required_with_word_placement += letter
@@ -456,7 +459,7 @@ class CompetitionBot(Bot):
             letter = self._board.game_board[
                 str(starting_coordinates[0] + index * direction[0])
             ][str(starting_coordinates[1] + index * direction[1])]["tile_object"].letter
-            if letter not in empty_tile:
+            if letter not in Globals.EMPTY_TILE:
                 letters_required_with_word_placement += letter
         # letters_available: list[str] = [char for char in tiles_in_array].extend(self._tilerow.tile_list)
         letters_available = [char for char in tiles_in_array]
@@ -639,7 +642,6 @@ class CompetitionBot(Bot):
         return res
 
     def valid_words(self, tilerow: list[str]) -> list[str]:
-
         n_blank = tilerow.count(" ")
         non_blanks = sorted([letter for letter in tilerow if letter != " "])
 
@@ -823,14 +825,10 @@ class CompetitionBot(Bot):
             amount_in_bag = 0
             amount_on_own_rack = 0
             for addition_letter in additions:
-                amount_on_own_rack += self.tilerow.amount_of_letter_on_rack(
-                    self.tilerow.tile_list, addition_letter
-                )
+                amount_on_own_rack += self.tilerow.tile_list.count(addition_letter)
                 amount_in_bag += self._tilebag.get_amount_of_letter(
                     addition_letter
-                ) + self.tilerow.amount_of_letter_on_rack(
-                    tilerow_opponent, addition_letter
-                )
+                ) + tilerow_opponent.count(addition_letter)
             if amount_in_bag != 0:
                 amount_in_bag -= (
                     (3 - self.get_score_difference() / 75)
@@ -879,12 +877,10 @@ class CompetitionBot(Bot):
             amount_on_own_rack = 0
             amount_in_bag = 0
             for addition_letter in additions:
-                amount_on_own_rack += self.tilerow.amount_of_letter_on_rack(
-                    self.tilerow.tile_list, addition_letter
-                )
+                amount_on_own_rack += self.tilerow.tile_list.count(addition_letter)
                 amount_in_bag += self._tilebag.get_amount_of_letter(
                     addition_letter
-                ) + self.tilerow.amount_of_letter_on_rack(tilerow_opp, addition_letter)
+                ) + tilerow_opp.count(addition_letter)
             if amount_in_bag != 0:
                 amount_in_bag -= (
                     (3 - self.get_score_difference() / 75)
@@ -1078,14 +1074,10 @@ class CompetitionBot(Bot):
             amount_on_own_rack = 0
             amount_in_bag = 0
             for addition_letter in additions:
-                amount_on_own_rack += self.tilerow.amount_of_letter_on_rack(
-                    self.tilerow.tile_list, addition_letter
-                )
+                amount_on_own_rack += self.tilerow.tile_list.count(addition_letter)
                 amount_in_bag += self._tilebag.get_amount_of_letter(
                     addition_letter
-                ) + self.tilerow.amount_of_letter_on_rack(
-                    tilerow_opponent, addition_letter
-                )
+                ) + tilerow_opponent.count(addition_letter)
             if amount_in_bag != 0:
                 amount_in_bag -= (
                     (3 - self.get_score_difference() / 75)
@@ -1114,15 +1106,25 @@ class CompetitionBot(Bot):
         return danger_word_played_alongside
 
     def get_score_difference(self) -> int:
-        own_score: int = (
+        """own_score: int = (
             self._sidebar.score_object.bot_score
             if self._player_id == 1
             else self._sidebar.score_object.player_score
+        )"""
+        own_score: int = (
+            Globals.scores[1]
+            if self._player_id == 1
+            else Globals.scores[0]
         )
-        opponent_score: int = (
+        """opponent_score: int = (
             self._sidebar.score_object.player_score
             if self._player_id == 1
             else self._sidebar.score_object.bot_score
+        )"""
+        opponent_score: int = (
+            Globals.scores[0]
+            if self._player_id == 1
+            else Globals.scores[1]
         )
         difference: int = own_score - opponent_score
         return difference
@@ -1182,3 +1184,68 @@ class CompetitionBot(Bot):
             if tile == " ":
                 blanks += 1
         return blanks
+
+def get_expected_multiplication(
+    current_tile: tuple[int, int],
+    check_direction: tuple[int, int],
+    game_board: dict[str, dict[str, GameBoardCell]],
+) -> float:
+    expected_multiplication: float = Globals.BOARDPOSITION_FACTORS[
+        "multiplication_danger_base"
+    ]
+    danger_xL: float = 0
+    starting_tile: tuple[int, int] = (
+        current_tile[0] - check_direction[0] * current_tile[0],
+        current_tile[1] - check_direction[1] * current_tile[1],
+    )
+    if (
+        starting_tile[0] >= 0
+        and starting_tile[0] < 15
+        and starting_tile[1] >= 0
+        and starting_tile[1] < 15
+    ):
+        for check_tile in [
+            game_board[str(starting_tile[0] + index * check_direction[0])][
+                str(starting_tile[1] + index * check_direction[1])
+            ]["tile_object"]
+            for index in range(0, 15)
+        ]:
+
+            if check_tile.letter in ("TW", "DW"):
+                distance_movetile_to_checktile: int = (
+                    (check_tile.board_coordinates[0] - current_tile[0]) ** 2
+                    + (check_tile.board_coordinates[1] - current_tile[1]) ** 2
+                ) ** 0.5
+                expected_multiplication *= Globals.BOARDPOSITION_FACTORS[
+                    check_tile.letter
+                ] ** (
+                    Globals.BOARDPOSITION_FACTOR_DISTANCE_REDUCTOR
+                    ** distance_movetile_to_checktile
+                )
+            if check_tile.letter in ("DL", "TL"):
+                distance_movetile_to_checktile: int = (
+                    (check_tile.board_coordinates[0] - current_tile[0]) ** 2
+                    + (check_tile.board_coordinates[1] - current_tile[1]) ** 2
+                ) ** 0.5
+                if distance_movetile_to_checktile == 1:
+                    if game_board[str(current_tile[0])][str(current_tile[1])][
+                        "tile_object"
+                    ].letter in ("A", "E", "O", "I", "U"):
+                        danger_xL += (
+                            3 * Globals.BOARDPOSITION_FACTORS[check_tile.letter]
+                        ) ** (Globals.BOARDPOSITION_FACTOR_DISTANCE_REDUCTOR)
+                    elif game_board[str(current_tile[0])][str(current_tile[1])][
+                        "tile_object"
+                    ].letter in ("K", "S"):
+                        danger_xL += Globals.BOARDPOSITION_FACTORS[
+                            check_tile.letter
+                        ] ** (Globals.BOARDPOSITION_FACTOR_DISTANCE_REDUCTOR)
+                    elif game_board[str(current_tile[0])][str(current_tile[1])][
+                        "tile_object"
+                    ].letter not in ("Q", "Y", "V", "C"):
+                        danger_xL += (
+                            0.25 * Globals.BOARDPOSITION_FACTORS[check_tile.letter]
+                        ) ** (Globals.BOARDPOSITION_FACTOR_DISTANCE_REDUCTOR)
+
+    expected_multiplication += danger_xL
+    return expected_multiplication

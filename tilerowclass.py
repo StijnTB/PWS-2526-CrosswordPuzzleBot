@@ -33,6 +33,7 @@ class PlayerTileRow(TileRow):
     def __init__(self, tilebag: TileBag):
         super().__init__(tilebag)
         self._tile_row_objects: list[RowTile] = []
+        self._tile_list = [" ","G","A","A","N","D","E"]
         self._tile_size: int = Globals.TILE_SIZE
         self._selected_tile_index: int = -1
         self._selected_letter: str = "None"
@@ -47,7 +48,7 @@ class PlayerTileRow(TileRow):
         Globals.global_should_recompute = True
         self.update()
 
-    def swap_letters(self, list_of_swapped_indexes: list[int]):
+    def swap_letters(self, list_of_swapped_indexes: list[int]) -> None:
         print(self._tile_list)
         letters_to_return: list[str] = []
         for index in list_of_swapped_indexes:
@@ -66,7 +67,7 @@ class PlayerTileRow(TileRow):
             tile_object: RowTile = self._tile_row_objects[index]
             tile_object.letter = self._tile_list[index]
 
-    def shuffle_row(self):
+    def shuffle_row(self) -> None:
         shuffleable_row_list: list[str] = self._tile_list.copy()
         tile_object: RowTile
         unshufflable_index_list: list[int] = []
@@ -84,14 +85,14 @@ class PlayerTileRow(TileRow):
         for index, tile_object in enumerate(self._tile_row_objects):
             tile_object.letter = self._tile_list[index]
 
-    def check_tile_selected(self, tile_row_index: int):
+    def check_tile_selected(self, tile_row_index: int) -> None:
         tile_object: RowTile = self._tile_row_objects[tile_row_index]
         if tile_object.tile_type == "Set_board/Base_tilerow":
             tile_object.tile_type = "Try_board/Selected_tilerow"
         elif tile_object.tile_type == "Try_board/Selected_tilerow":
             tile_object.tile_type = "Set_board/Base_tilerow"
 
-    def get_clicked_tile_index(self, mouse_coordinates: tuple[int, int]):
+    def get_clicked_tile_index(self, mouse_coordinates: tuple[int, int]) -> int:
         mouse_x = mouse_coordinates[0]
         selected_tile_index = 0
         for index in range(0, len(self._tile_list)):
@@ -105,7 +106,7 @@ class PlayerTileRow(TileRow):
                     selected_tile_index = index
         return selected_tile_index
 
-    def change_selected_tile(self, mouse_coordinates: tuple[int, int]):
+    def change_selected_tile(self, mouse_coordinates: tuple[int, int]) -> None:
         new_selected_tile_index = self.get_clicked_tile_index(mouse_coordinates)
         if (
             new_selected_tile_index == self._selected_tile_index
@@ -125,7 +126,7 @@ class PlayerTileRow(TileRow):
             self._selected_tile_index = new_selected_tile_index
             self.selected_letter = self._tile_list[self.selected_tile_index]
 
-    def hide_selected_tile(self, clicked_board_tile_coordinates: tuple[int, int]):
+    def hide_selected_tile(self, clicked_board_tile_coordinates: tuple[int, int]) -> None:
         selected_tile: RowTile = self._tile_row_objects[self.selected_tile_index]
         self.check_tile_selected(self.selected_tile_index)
         selected_tile.tile_type = "Played_tilerow_letter"
@@ -134,7 +135,7 @@ class PlayerTileRow(TileRow):
         self._played_tile_list.append(selected_tile)
         self._board_set_tile_list.append(clicked_board_tile_coordinates)
 
-    def return_full_tilerow(self):
+    def return_full_tilerow(self) -> None:
         for tile_object in self._played_tile_list:
             tile_object.tile_type = "Set_board/Base_tilerow"
         self._played_tile_list.clear()
@@ -145,7 +146,7 @@ class PlayerTileRow(TileRow):
         uncheck: bool,
         board_tile_coordinates: tuple[int, int],
         tile_is_blank: bool,
-    ):
+    ) -> None:
         if uncheck:
             self.check_tile_selected(self.selected_tile_index)
         index: int
@@ -165,7 +166,7 @@ class PlayerTileRow(TileRow):
                 self._board_set_tile_list.remove(board_tile_coordinates)
                 break
 
-    def get_new_letters(self):
+    def get_new_letters(self) -> None:
         if len(self._played_tile_list) <= len(self._tilebag.bag_list):
             for tile in self._played_tile_list:
                 tile.letter = self._tilebag.grab_letters(1)[0]
@@ -215,7 +216,6 @@ class BotTileRow(TileRow):
     def __init__(self, tilebag: TileBag):
         super().__init__(tilebag)
         self._max_grabbable_amount_from_tilebag: int = 7
-        #self._tile_list = ["Q", "Q", "Q", "Q", "Q", "X", "E"]
 
     def get_new_letters(self, letters_to_replace: list[str]) -> None:
         old_tile_list = self._tile_list.copy()
@@ -249,6 +249,3 @@ class BotTileRow(TileRow):
             self._tile_list.remove(letter)
         self._tile_list.extend(self._tilebag.swap_letters(letters_to_return))
         print(self._tile_list)
-
-    def amount_of_letter_on_rack(self, tilerow: list[str], letter: str) -> int:
-        return tilerow.count(letter)

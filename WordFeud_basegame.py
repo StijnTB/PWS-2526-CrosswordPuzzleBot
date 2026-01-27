@@ -1,21 +1,30 @@
 from itertools import combinations
 from json import load
-from pygame import init, quit, event, display, QUIT
+from pygame import (
+    init as pygame_init, 
+    quit as pygame_quit, 
+    event, 
+    display, 
+    QUIT as QUITevent)
 from random import seed, randint
 
 from boardclass import Board
 from competition_bot import CompetitionBot
 from globals import Globals, screen
-from player import Player  # pyright: ignore[reportUnusedImport]
+#from player import Player  # pyright: ignore[reportUnusedImport]
 from sidebar import SideBar
 from tilebagclass import TileBag
 from trieclass import TRIE
 
+from testfile import Player
 
-init()
+pygame_init()
+screen.fill("Black")
 seed(Globals.RANDOM_SEED)
+
 word_trie: TRIE = TRIE()
 wordlist: list[str] = []
+
 bots_greedy_or_board_position: bool = False
 seven_letter_words: list[str] = []
 word_dict: dict[int, dict[str, list[str]]] = {}
@@ -28,9 +37,9 @@ with open("wordlist.txt", "r", encoding="utf-8") as wordlist_file:
         wordlist[index] = word
         word_trie.insert(word)
 
-with open("achtervoegselwoorden.json", "r") as f:
+with open("suffixes.json", "r") as f:
     achtervoegsels = load(f)
-with open("voorvoegselwoorden.json", "r") as f:
+with open("prefixes.json", "r") as f:
     voorvoegsels = load(f)
 
 
@@ -59,12 +68,12 @@ if not bots_greedy_or_board_position:
                 word_dict[5][kept].append(word)
 
 
-screen.fill("Black")
+
 
 game_board = Board(Globals.BOARD_LAYOUT_LIST, word_trie)
 tilebag = TileBag()
 sidebar = SideBar()
-player = CompetitionBot(
+"""player = CompetitionBot(
     tilebag,
     game_board,
     sidebar,
@@ -74,7 +83,8 @@ player = CompetitionBot(
     word_dict,
     voorvoegsels,
     achtervoegsels,
-)
+)"""
+player = Player(tilebag, game_board)
 bot = CompetitionBot(
     tilebag,
     game_board,
@@ -98,14 +108,18 @@ amount_of_turns: int = 0
 running = True
 while running:
     for _event in event.get():
-        if _event.type == QUIT:
+        if _event.type == QUITevent:
             running = False
+            break
     print(f"player tilerow: {player.tilerow.tile_list}")
     print(f"bot tilerow: {bot.tilerow.tile_list}")
     Globals.players_tilerows[1] = player.tilerow.tile_list
     Globals.players_tilerows[2] = bot.tilerow.tile_list
     if turn == 0:
-        player.competition_bot_play()
+        player_return_code = player.play_main()
+        if player_return_code == "Quit":
+            running = False
+            break
         turn = 1
     elif turn == 1:
         bot.competition_bot_play()
@@ -127,5 +141,11 @@ while running:
         sidebar.score_object.player_score -= player.tilerow.get_remaining_points()
         display.flip()
         break
-
-quit()
+running = True
+print('exit phase')
+while running:
+    for _event in event.get():
+        if _event.type == QUITevent:
+            running = False
+            break
+pygame_quit()

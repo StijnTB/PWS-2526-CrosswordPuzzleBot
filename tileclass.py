@@ -1,5 +1,6 @@
 from pygame import Rect, Color, draw, display, font, surface
-from random import randint, seed
+from random import seed
+from typing import Literal
 
 from globals import Globals, screen
 
@@ -12,14 +13,14 @@ class BaseTile:
         self,
         tile_size: int = Globals.TILE_SIZE,
         letter: str = "",
-        tile_type: str = "Empty_board_tilerow",
+        tile_type: Literal["TW","TL","DW","DL","MI","Empty_tile","Played_tilerow_letter","Set_board/Base_tilerow","Try_board/Selected_tilerow"] = "Empty_tile",
         x: int = 0,
         y: int = 0,
     ) -> None:
         self._tile_size: int = tile_size
         self._letter: str = letter
         self._tile_value: int = 0
-        self._tile_type: str = tile_type
+        self._tile_type: Literal["TW","TL","DW","DL","MI","Empty_tile","Played_tilerow_letter","Set_board/Base_tilerow","Try_board/Selected_tilerow"] = tile_type
         self._x: int = x
         self._y: int = y
         self._tile_color: Color = Globals.TILE_COLOR_DICT[self._tile_type]
@@ -74,7 +75,7 @@ class BaseTile:
                 )
             screen.blit(self._tile_value_image, (self._x + 7, self._y + 7))
 
-    def recalculate_letters(self):
+    def recalculate_letters(self) -> None:
         self._pygame_font: font.Font = font.Font(
             "GothamBlack.ttf", Globals.TEXT_SIZE_TILE
         )
@@ -114,9 +115,6 @@ class BaseTile:
 
     @letter.setter
     def letter(self, new_letter: str) -> None:
-        if new_letter == " ":
-            new_letter = list(Globals.TILE_LETTER_DICT.keys())[randint(0, 25)]
-            self._is_attempt_blank = True
         self._letter = new_letter
         # Globals.global_should_recompute = True
         self.update()
@@ -126,7 +124,7 @@ class BaseTile:
         return self._tile_type
 
     @tile_type.setter
-    def tile_type(self, new_tile_type: str) -> None:
+    def tile_type(self, new_tile_type: Literal["TW","TL","DW","DL","MI","Empty_tile","Played_tilerow_letter","Set_board/Base_tilerow","Try_board/Selected_tilerow"]) -> None:
         self._tile_type = new_tile_type
         # Globals.global_should_recompute = True
         self.update()
@@ -139,7 +137,7 @@ class RowTile(BaseTile):
         letter: str = "",
         row_coords: int = 0,  # the location on the row, 0 is left and 6 is right
     ) -> None:
-        self._tile_type: str = "Set_board/Base_tilerow"
+        self._tile_type = "Set_board/Base_tilerow"
         self._tile_size: int = tile_size
         self._letter: str = letter
         self._row_coordinate: int = row_coords
@@ -178,13 +176,13 @@ class BoardTile(BaseTile):
         self,
         tile_size: int = Globals.TILE_SIZE,
         letter: str = "",
-        tile_type: str = "Empty_tile",
+        tile_type: Literal["TW","TL","DW","DL","MI","Empty_tile","Set_board/Base_tilerow","Try_board/Selected_tilerow"] = "Empty_tile",
         board_coords: tuple[int, int] = (0, 0),
     ) -> None:
         self._used: bool = False
         self._tile_size: int = int(tile_size)
         self._letter: str = letter
-        self._tile_type: str = tile_type
+        self._tile_type = tile_type
         self._board_coordinates: tuple[int, int] = board_coords
         self._is_attempt_blank: bool = (
             False  # if true, the board tile is a try and contains a letter which is not su

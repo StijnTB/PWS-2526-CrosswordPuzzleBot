@@ -5,7 +5,7 @@ from tileclass import BoardTile
 from trieclass import TRIE
 
 
-class game_board_cell(TypedDict):
+class GameBoardCell(TypedDict):
     type: Optional[str]
     letter: Optional[str]
     tile_object: BoardTile
@@ -21,38 +21,40 @@ class Board:
             list[Literal["TW", "TL", "DW", "DL", "MI"] | None]
         ] = original_board_layout
         self._word_tree: TRIE = word_tree
-        self._game_board: dict[str, dict[str, game_board_cell]] = {}
+        self._game_board: dict[str, dict[str, GameBoardCell]] = {}
         self.is_first_turn: bool = True
-        self._used_rows: list[int] = [False for _ in range(0, 15)]
-        self._used_columns: list[int] = [False for _ in range(0, 15)]
+        self._used_rows: list[bool] = [False for _ in range(0, 15)]
+        self._used_columns: list[bool] = [False for _ in range(0, 15)]
         for row_index in range(0, len(self._original_board_layout)):
             self._game_board[str(row_index)] = {}
             for column_index in range(0, 15):
                 original_tile: str | None = self._original_board_layout[row_index][
                     column_index
                 ]
-                self._game_board[str(row_index)][str(column_index)] = {
-                    "type": self._original_board_layout[row_index][column_index],
-                    "letter": None,
-                    "tile_object": BoardTile(
-                        letter=(
+
+                self._game_board[str(row_index)][str(column_index)] = GameBoardCell(
+                    type = self._original_board_layout[row_index][column_index],
+                    letter = None,
+                    tile_object = BoardTile(
+                        letter = (
                             ""
                             if original_tile == None or original_tile == "MI"
                             else str(original_tile)
                         ),
-                        tile_type=(
+                        tile_type = (
                             original_tile if original_tile != None else "Empty_tile"
                         ),
-                        board_coords=(row_index, column_index),
-                    ),
-                }
+                        board_coords = (row_index, column_index)
+                    )
+                )
+                
 
     @property
-    def used_rows(self) -> list[int]:
+    def used_rows(self) -> list[bool]:
         return self._used_rows
 
     @property
-    def used_columns(self) -> list[int]:
+    def used_columns(self) -> list[bool]:
         return self._used_columns
 
     def update(self) -> None:
@@ -62,7 +64,7 @@ class Board:
                 tile_object.update()
 
     @property
-    def game_board(self) -> dict[str, dict[str, game_board_cell]]:
+    def game_board(self) -> dict[str, dict[str, GameBoardCell]]:
         return self._game_board
 
     @property
@@ -108,14 +110,16 @@ class Board:
         return (row_coordinate, column_coordinate)
 
     def set_letter_to_tile(
-        self, letter: str, tile_coordinates: tuple[int, int]
+        self, letter: str, tile_coordinates: tuple[int, int], is_attempt_blank: bool = False
     ) -> bool:
         selected_tile: BoardTile = self.game_board[str(tile_coordinates[0])][
             str(tile_coordinates[1])
         ]["tile_object"]
         if len(selected_tile.letter) != 1 and len(letter) == 1:
+            selected_tile.is_attempt_blank = is_attempt_blank
             selected_tile.letter = letter
             selected_tile.tile_type = "Try_board/Selected_tilerow"
+            
             # Globals.global_should_recompute = True
             return True
         else:
@@ -126,7 +130,7 @@ class Board:
             "tile_object"
         ]
 
-    def reset_tile(self, clicked_tile_coordinates: tuple[int, int]):
+    def reset_tile(self, clicked_tile_coordinates: tuple[int, int]) -> None:
         clicked_tile_y: int = clicked_tile_coordinates[0]
         clicked_tile_x: int = clicked_tile_coordinates[1]
         original_type: str | None = Globals.BOARD_LAYOUT_LIST[clicked_tile_y][
@@ -146,7 +150,7 @@ class Board:
 
         # Globals.global_should_recompute = True
 
-    def reset_tiles(self, reset_coordinates_list: list[tuple[int, int]]):
+    def reset_tiles(self, reset_coordinates_list: list[tuple[int, int]]) -> None:
         for coordinate_set in reset_coordinates_list:
             self.reset_tile(coordinate_set)
 
@@ -364,7 +368,7 @@ class Board:
         tile_coordinates_list: list[tuple[int, int]],
         letters_list: list[str],
         blanks_list: list[tuple[int, int]],
-    ):
+    ) -> None:
         if len(tile_coordinates_list) == len(letters_list):
             for index in range(len(tile_coordinates_list)):
                 if not self._used_rows[tile_coordinates_list[index][0]]:
