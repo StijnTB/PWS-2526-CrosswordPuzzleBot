@@ -54,15 +54,15 @@ class Globals:
     TEXT_SIZE_TILE: int = int(TILE_SIZE / 2)
     # TILE_COLOR_DICT: The different colors a tile can take depending on its function and occupation
     TILE_COLOR_DICT: dict[str, Color] = {
-        "TW": Color(122, 57, 57), # Dark red
-        "TL": Color(72, 91, 145), # Dark blue
-        "DW": Color(191, 120, 32), # Yellow
-        "DL": Color(113, 157, 101), # Green
-        "MI": Color(97, 72, 99), # Purple
-        "Empty_tile": Color(44, 47, 54),  # Grey
-        "Played_tilerow_letter": Color(44, 47, 54),  # Grey, same as Globals.EMPTY_TILE
-        "Set_board/Base_tilerow": Color(209, 210, 205),  # Greyish white
-        "Try_board/Selected_tilerow": Color(255, 255, 255),  # Pure white
+        "TW": Color(22, 57, 157), #122, 57, 57
+        "TL": Color(172, 91, 45), #72, 91, 145
+        "DW": Color(91, 120, 132), #191, 120, 32
+        "DL": Color(13, 157, 201), #133, 157, 101
+        "MI": Color(197, 72, 254), #97, 72, 99
+        "Empty_tile": Color(84, 84, 84),  # grey
+        "Played_tilerow_letter": Color(44, 47, 54),  # grey, same as empty_tile
+        "Set_board/Base_tilerow": Color(209, 210, 205),  # greyish white
+        "Try_board/Selected_tilerow": Color(255, 255, 255),  # white
     }
     # global_should_recompute: a variable which tells the program to do a full visual recomputation. used sparingly, only when a visual element has to fully disappear
     global_should_recompute: bool = True
