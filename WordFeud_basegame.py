@@ -11,12 +11,12 @@ from random import seed, randint
 from boardclass import Board
 from competition_bot import CompetitionBot
 from globals import Globals, screen
-#from player import Player  # pyright: ignore[reportUnusedImport]
+from player import Player
 from sidebar import SideBar
 from tilebagclass import TileBag
 from trieclass import TRIE
 
-from testfile import Player
+
 
 pygame_init()
 screen.fill("Black")
