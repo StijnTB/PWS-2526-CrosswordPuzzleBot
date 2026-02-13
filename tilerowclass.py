@@ -33,7 +33,6 @@ class PlayerTileRow(TileRow):
     def __init__(self, tilebag: TileBag):
         super().__init__(tilebag)
         self._tile_row_objects: list[RowTile] = []
-        self._tile_list = [" ","G","A","A","N","D","E"]
         self._tile_size: int = Globals.TILE_SIZE
         self._selected_tile_index: int = -1
         self._selected_letter: str = "None"

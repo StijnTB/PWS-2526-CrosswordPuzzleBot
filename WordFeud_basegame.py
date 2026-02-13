@@ -16,7 +16,7 @@ from sidebar import SideBar
 from tilebagclass import TileBag
 from trieclass import TRIE
 
-
+human_player: bool = True
 
 pygame_init()
 screen.fill("Black")
@@ -73,25 +73,28 @@ if not bots_greedy_or_board_position:
 game_board = Board(Globals.BOARD_LAYOUT_LIST, word_trie)
 tilebag = TileBag()
 sidebar = SideBar()
-"""player = CompetitionBot(
-    tilebag,
-    game_board,
-    sidebar,
-    wordlist,
-    2,
-    "greedy",
-    word_dict,
-    voorvoegsels,
-    achtervoegsels,
-)"""
-player = Player(tilebag, game_board)
+if human_player:
+    player = Player(tilebag, game_board)
+else:
+    player = CompetitionBot(
+        tilebag,
+        game_board,
+        sidebar,
+        wordlist,
+        2,
+        "Greedy",
+        word_dict,
+        voorvoegsels,
+        achtervoegsels,
+    )
+
 bot = CompetitionBot(
     tilebag,
     game_board,
     sidebar,
     wordlist,
     1,
-    "combi",
+    "Combi",
     word_dict,
     voorvoegsels,
     achtervoegsels,
@@ -101,7 +104,6 @@ Globals.global_should_recompute = True
 starting_turn: int = randint(
     0, 1
 )  # if starting_turn = 0, player starts, elif starting_turn = 1, bot starts
-starting_turn = 0
 players_turn: bool = True
 turn = starting_turn
 amount_of_turns: int = 0
@@ -116,10 +118,13 @@ while running:
     Globals.players_tilerows[1] = player.tilerow.tile_list
     Globals.players_tilerows[2] = bot.tilerow.tile_list
     if turn == 0:
-        player_return_code = player.play_main()
-        if player_return_code == "Quit":
-            running = False
-            break
+        if human_player:
+            player_return_code = player.play_main()
+            if player_return_code == "Quit":
+                running = False
+                break
+        else:
+            player.competition_bot_play()
         turn = 1
     elif turn == 1:
         bot.competition_bot_play()

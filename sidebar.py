@@ -209,6 +209,7 @@ class Scores:
             Globals.BUTTON_SIZE[0],
             self.BACKGROUND_HEIGHT,
         )
+        self._player_types: list[Literal["Player","Greedy","Combi","Boardposition","Chance", "Bot"]] = ["Player","Bot"]
         self._background_rect: Rect = draw.rect(
             display.get_surface(),  # surface
             Globals.TILE_COLOR_DICT["Try_board/Selected_tilerow"],  # color
@@ -267,6 +268,20 @@ class Scores:
                 - calculate_text_dimensions(self._pygame_font, "BOT")[1]
             ),
         )
+        self._player_image = self._pygame_font.render(self.player_types[0].upper(), True, "Black")
+        self._bot_image = self._pygame_font.render(self.player_types[1].upper(), True, "Black")
+        self._player_image_coordinates: tuple[int, int] = (
+            self._text_starting_x,
+            int(Globals.BUTTON_SIZE[1] / 4),
+        )
+        self._bot_image_coordinates: tuple[int, int] = (
+            self._text_starting_x,
+            int(
+                self.BACKGROUND_HEIGHT
+                - Globals.BUTTON_SIZE[1] / 4
+                - calculate_text_dimensions(self._pygame_font, self.player_types[1].upper())[1]
+            ),
+        )
         screen.blit(self._player_image, self._player_image_coordinates)
         screen.blit(self._bot_image, self._bot_image_coordinates)
         screen.blit(self._player_score_image, self._player_score_image_coordinates)
@@ -281,7 +296,16 @@ class Scores:
         self._player_score = new_score
         print(f"player score {self._player_score}; bot score {self._bot_score};")
         self.update()
-
+    
+    @property
+    def player_types(self) -> list[Literal["Player","Greedy","Combi","Boardposition","Chance"]]:
+        return self._player_types
+    
+    @player_types.setter
+    def player_types(self, new_player_types: list[Literal["Player","Greedy","Combi","Boardposition","Chance"]]) -> None:
+        self._player_types = new_player_types
+        self.update()
+    
     @property
     def bot_score(self) -> int:
         return self._bot_score
@@ -481,6 +505,7 @@ class ButtonSet:
 
 class SideBar:
     def __init__(self):
+        self._player_types: list[Literal["Player","Greedy","Combi","Boardposition","Chance"]] = ["Player","Greedy"]
         self._score_object: Scores = Scores()
         self._button_set: ButtonSet = ButtonSet()
         self._blank_button_set: BlankTileButtonSet = BlankTileButtonSet()
@@ -500,6 +525,14 @@ class SideBar:
         )
         Globals.global_should_recompute = True
         self.update()
+
+    @property
+    def player_types(self) -> list[Literal["Player","Greedy","Combi","Boardposition","Chance"]]:
+        return self._player_types
+    
+    def player_types_setter(self, new_player_type: Literal["Player","Greedy","Combi","Boardposition","Chance"], index: int) -> None:
+        self._player_types[index] = new_player_type
+        self.score_object.player_types = self._player_types
 
     def recalculate_button_highlights(self, mouse_coordinates: tuple[int, int]) -> None:
         self._button_set.calculate_button_highlights(mouse_coordinates)

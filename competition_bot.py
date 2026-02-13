@@ -29,20 +29,22 @@ class CompetitionBot(Bot):
         board: Board,
         sidebar: SideBar,
         wordlist: list[str],
-        player_id: Literal[1, 2],
-        modus: Literal["greedy", "kansberekening", "bordpositie", "combi"],
+        player_id: Literal[1,2],
+        modus: Literal["Greedy", "Combi", "Boardposition", "Chance"],
         word_dict: dict[int, dict[str, list[str]]],
         voorvoegsels: dict[str, str],
         achtervoegsels: dict[str, str],
     ):
+        self.type_id: Literal["Player","Greedy","Combi","Boardposition", "Chance"] = modus
         self._tilebag: TileBag = tilebag
         self._board: Board = board
         self._sidebar: SideBar = sidebar
         self._wordlist: list[str] = wordlist
         self._player_id: int = player_id
-        self._modus: Literal["greedy", "kansberekening", "bordpositie", "combi"] = (
+        self._modus: Literal["Greedy", "Chance", "Boardposition", "Combi"] = (
             modus  # "greedy", "kansberekening", "bordpositie", "combi" voor initializatie specifieke functies
         )
+        self._sidebar.player_types_setter(self._modus, (0 if self._player_id == 2 else 1))
         self._letterFreqs: dict[str, list[int]] = {}
         self._checkList: dict[str, list[int]] = {}
         self._letterTypes: list[int] = [0 for _ in range(len(self._wordlist))]
@@ -65,7 +67,7 @@ class CompetitionBot(Bot):
         possible_moves_list: list[BotMoveObject] = []
         best_move_greedy: BotMoveObject = BotMoveObject([], [], [], (1, 1), 0)
         bingo_dict: dict[str, float] = {}
-        if self._modus in ("kansberekening", "combi"):
+        if self._modus in ("Chance", "Combi"):
             if self._tilebag.get_amount_of_letters_remaining() > 0:
                 bingo_dict = self.get_bingo_dict()
                 print(bingo_dict)
@@ -274,12 +276,8 @@ class CompetitionBot(Bot):
                     )
                     if attempt_object.move_coordinates != []:
                         possible_moves_list.append(attempt_object)
-                        if self._modus in ("kansberekening", "combi"):
+                        if self._modus in ("Chance", "Combi"):
                             self.update_bingo_bonus_score(attempt_object, bingo_dict)
-                        # if self._modus in ("bordpositie", "combi"):
-                        #    self.update_boardposition_score(attempt_object)
-                        
-
                         if round(
                             (
                                 attempt_object.score
@@ -607,7 +605,7 @@ class CompetitionBot(Bot):
         if len(set_tiles_list) == 7:
             total_points += 40  # add 40 for all tiles set
         boardposition_score: float = 0
-        if self._modus in ("bordpositie", "combi"):
+        if self._modus in ("Boardposition", "Combi"):
             if len(word_attempt_letters) > 0:
                 boardposition_score = self.update_boardposition_score(
                     word_attempt_tiles, direction, word_attempt_letters, attempted_words

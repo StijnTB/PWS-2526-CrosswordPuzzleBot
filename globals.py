@@ -1,5 +1,6 @@
 from pygame import Color, display
 from typing import Literal
+import time
 
 
 class Globals:
@@ -19,7 +20,8 @@ class Globals:
     # amount_of_passes: every time the player or the bot passes, increase by 1. after 3, stop game
     amount_of_passes: int = 0
     # RANDOM_SEED: the seed to use for every random generator to improve bugfixing
-    RANDOM_SEED: int = 111
+    """RANDOM_SEED: int = 111"""
+    RANDOM_SEED: int = time.time()
     # BINGO_BONUS_SCORE_MULTIPLIER: a multiplier for the bingo bonus score to vary its influence
     BINGO_BONUS_SCORE_MULTIPLIER: float = 0.5
     # BOARDPOSITION_FACTORS: a group of factors used for calculating the boardposition degradation factor

@@ -25,6 +25,8 @@ class Player:
             False  # when True, player wants to exit, which sends message to main loop in basegame to stop loop
         )
         self.update()
+        self.type_id: Literal["Player","Greedy","Combi","Boardposition", "Chance"] = "Player"
+        self._sidebar.player_types_setter("Player", 0)
     def play_main(self) -> Literal["Continue", "Quit", None]:
         self._is_turn = True
         self._screen_should_recompute: bool = False
